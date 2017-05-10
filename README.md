@@ -16,7 +16,7 @@
 * 增加了服务端心跳。websocket不能响应客户端突然断网的情况，onclose回调不到。通过心跳来判断和移除断开连接的peer
 ### ICE Server
   ICE Server 用来实现p2p穿墙或可靠传输。
-  基于 https://github.com/coturn/coturn ，具体环境的搭建参考网上资料。如果只是测试，可以用第三方的服务器，比如：http://numb.viagenie.ca/ 可以申请账号
+  基于 https://github.com/coturn/coturn ，具体环境的搭建参考网上资料。如果只是测试，可以用第三方的服务器，比如：http://numb.viagenie.ca/ 可以申请账号，demo中有提供申请好的账号，如果是局域网同一wifi，不需要ice server
 ## 使用
 ### MutiRTC_Unity
 * Main Camera 上的Main脚本中修改Host/Port为自己的信令服务器ip地址和端口，IceServers修改为自己搭建或申请的stun/turn地址
