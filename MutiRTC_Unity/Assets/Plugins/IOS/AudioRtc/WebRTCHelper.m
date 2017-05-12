@@ -24,6 +24,8 @@ block();\
 dispatch_async(dispatch_get_main_queue(), block);\
 }
 
+//#define DEBUG
+
 //第三方ice
 static NSString *const RTCSTUNServerURL = @"stun:numb.viagenie.ca:3478";
 static NSString *const RTCTURNServerURL = @"turn:numb.viagenie.ca";
@@ -106,16 +108,13 @@ static WebRTCHelper *instance = nil;
  */
 - (void)connectServer:(NSString *)server port:(NSString *)port iceServers:(NSArray *)iceServers
 {
-    [self getCurrentCategory:@"connectServer"];
-
-    //[[AVAudioSession sharedInstance]setActive:NO error:nil];
+    //[self getCurrentCategory:@"connectServer"];
     
     //server = @"172.16.130.6";
     _server = server;
     _port = port;
     _iceServers = iceServers;
-    NSLog(@"[connectServer] server = %@ port = %@",server,port);
-    
+
     [self connectServer];
 }
 
@@ -183,7 +182,10 @@ static WebRTCHelper *instance = nil;
 #pragma mark--SRWebSocketDelegate
 - (void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message
 {
+#ifdef DEBUG
     NSLog(@"收到服务器消息:%@",message);
+#endif
+    
     //heartbeat
     if ([message isEqualToString:@"_heratbeat"]) {
         if (_socket && _socket.readyState == SR_OPEN) {
@@ -332,7 +334,10 @@ static WebRTCHelper *instance = nil;
 
 - (void)webSocketDidOpen:(SRWebSocket *)webSocket
 {
+#ifdef DEBUG
     NSLog(@"websocket建立成功");
+#endif
+    
 //    NSLog(@"[webSocketDidOpen] 当前线程  %@",[NSThread currentThread]);
 //    NSLog(@"[webSocketDidOpen] 主线程    %@",[NSThread mainThread]);
     
@@ -346,9 +351,12 @@ static WebRTCHelper *instance = nil;
 
 - (void)webSocket:(SRWebSocket *)webSocket didFailWithError:(NSError *)error
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
     NSLog(@"readyState = %ld;code = %ld;reason = %@",(long)webSocket.readyState,(long)error.code, error.localizedDescription);
     NSLog(@"_socket state = %ld",(long)_socket.readyState);
+#endif
+    
     //54:server disconnect 57:socket not connected 50:network is down
     //锁屏后开屏readyState = 3;code = 2145;reason = Error writing to stream
     if (webSocket.readyState == SR_CLOSING||(webSocket.readyState == SR_CLOSED && error.code != 50)
@@ -364,8 +372,10 @@ static WebRTCHelper *instance = nil;
 
 - (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
     NSLog(@"readyState = %ld;code = %ld;reason = %@",(long)webSocket.readyState,(long)code, reason);
+#endif
     
     if (webSocket.readyState == SR_CLOSING || webSocket.readyState == SR_CLOSED) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -424,7 +434,7 @@ static WebRTCHelper *instance = nil;
         [[AVAudioSession sharedInstance]setActive:true error:nil];
         _isSpeakerEnabled = NO;
         //[self enableSpeaker:NO];
-        [self getCurrentCategory:@"closePeerConnection"];
+        //[self getCurrentCategory:@"closePeerConnection"];
     });
 
     [peerConnection close];
@@ -732,8 +742,10 @@ static WebRTCHelper *instance = nil;
                     pw = temp[2];
                 }
             }
+#ifdef DEBUG
+           NSLog(@"[createPeerConnection] stunURL is : %@",stunURL);
+#endif
             
-            NSLog(@"[createPeerConnection] stunURL is : %@",stunURL);
             //stunURL = [stunURL stringByAppendingString:(NSString *)object];
             NSURL *defaultSTUNServerURL = [NSURL URLWithString:stunURL];
             RTCICEServer *iceServer = [[RTCICEServer alloc] initWithURI:defaultSTUNServerURL username:un password:pw];
@@ -807,8 +819,11 @@ static WebRTCHelper *instance = nil;
 didCreateSessionDescription:(RTCSessionDescription *)sdp
                  error:(NSError *)error
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
     NSLog(@"%@",sdp.type);
+#endif
+    
     //设置本地的SDP
     [peerConnection setLocalDescriptionWithDelegate:self sessionDescription:sdp];
     
@@ -819,8 +834,10 @@ didCreateSessionDescription:(RTCSessionDescription *)sdp
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
 didSetSessionDescriptionWithError:(NSError *)error
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
-    
+#endif
+
     _currentId = [self getKeyFromConnectionDic : peerConnection];
     
     //判断，当前连接状态为，收到了远程点发来的offer，这个是进入房间的时候，尚且没人，来人就调到这里
@@ -861,8 +878,10 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
  signalingStateChanged:(RTCSignalingState)stateChanged
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
     NSLog(@"%d", stateChanged);
+#endif
 
     if (stateChanged == RTCSignalingClosed) {
         //[self setAudioSessionActive:1];
@@ -880,7 +899,9 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
            addedStream:(RTCMediaStream *)stream
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
+#endif
     
     NSString *uid = [self getKeyFromConnectionDic : peerConnection];
     [_remoteStreams setObject:stream forKey:uid];
@@ -911,7 +932,7 @@ didSetSessionDescriptionWithError:(NSError *)error
     [_connectionDic enumerateKeysAndObjectsUsingBlock:^(NSString *key, RTCPeerConnection *obj, BOOL * _Nonnull stop) {
         if ([obj isEqual:peerConnection])
         {
-            NSLog(@"%@",key);
+            //NSLog(@"%@",key);
             socketId = key;
         }
     }];
@@ -928,15 +949,17 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
   iceConnectionChanged:(RTCICEConnectionState)newState
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
     NSLog(@"%d", newState);
+#endif
     
     NSString *uId = [self getKeyFromConnectionDic : peerConnection];
     
     if (newState == RTCICEConnectionConnected){
-        [self getCurrentCategory:@"Connected1"];
+        //[self getCurrentCategory:@"Connected1"];
         [self enableSpeaker:YES];
-        [self getCurrentCategory:@"Connected2"];
+        //[self getCurrentCategory:@"Connected2"];
     }
     else if (newState == RTCICEConnectionDisconnected)
     {
@@ -945,7 +968,7 @@ didSetSessionDescriptionWithError:(NSError *)error
     else if (newState == RTCICEConnectionClosed || newState == RTCICEConnectionFailed){
         
         //[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-        [self getCurrentCategory:@"Closed"];
+        //[self getCurrentCategory:@"Closed"];
         
         if ([_delegate respondsToSelector:@selector(webRTCHelper:noticePCClosed:)])
         {
@@ -958,8 +981,8 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
    iceGatheringChanged:(RTCICEGatheringState)newState
 {
-    NSLog(@"%s",__func__);
-    NSLog(@"%d", newState);
+    //NSLog(@"%s",__func__);
+    //NSLog(@"%d", newState);
 }
 
 // New Ice candidate have been found.
@@ -967,7 +990,9 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection *)peerConnection
        gotICECandidate:(RTCICECandidate *)candidate
 {
+#ifdef DEBUG
     NSLog(@"%s",__func__);
+#endif
     
     _currentId = [self getKeyFromConnectionDic : peerConnection];
     
@@ -980,7 +1005,7 @@ didSetSessionDescriptionWithError:(NSError *)error
 - (void)peerConnection:(RTCPeerConnection*)peerConnection didOpenDataChannel:(RTCDataChannel*)dataChannel
 
 {
-    NSLog(@"%s",__func__);
+    //NSLog(@"%s",__func__);
 }
 
 /***********************************************************************************************************************/
@@ -996,8 +1021,10 @@ didSetSessionDescriptionWithError:(NSError *)error
     if (!_remoteStreams) {
         return;
     }
-    
+#ifdef DEBUG
     NSLog(@"_remoteStreams count = %lu",(unsigned long)_remoteStreams.count);
+#endif
+    
     [_remoteStreams enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, RTCMediaStream *ms, BOOL * _Nonnull stop) {
         if (ms) {
             [self activeStream:ms active:active];
@@ -1116,35 +1143,35 @@ didSetSessionDescriptionWithError:(NSError *)error
     NSLog(@"code = %@;CurrentCategory = %@",code,category);
 }
 
-// -(void)setVolume:(float)value{
+-(void)setVolume:(float)value{
     
-//     MPVolumeView *volumeView = [[MPVolumeView alloc]init];
+    MPVolumeView *volumeView = [[MPVolumeView alloc]init];
     
-//     volumeView.showsRouteButton = NO;
-//     //默认YES，这里为了突出，故意设置一遍
-//     volumeView.showsVolumeSlider = YES;
+    volumeView.showsRouteButton = NO;
+    //默认YES，这里为了突出，故意设置一遍
+    volumeView.showsVolumeSlider = YES;
     
-//     [volumeView sizeToFit];
-//     [volumeView setFrame:CGRectMake(-1000, -1000, 10, 10)];
-//     [volumeView userActivity];
+    [volumeView sizeToFit];
+    [volumeView setFrame:CGRectMake(-1000, -1000, 10, 10)];
+    [volumeView userActivity];
     
-//     UISlider* volumeSlider = nil;
-//     for (UIView *view in [volumeView subviews]){
-//         if ([[view.class description] isEqualToString:@"MPVolumeSlider"]){
-//             volumeSlider = (UISlider*)view;
-//             break;
-//         }
-//     }
+    UISlider* volumeSlider = nil;
+    for (UIView *view in [volumeView subviews]){
+        if ([[view.class description] isEqualToString:@"MPVolumeSlider"]){
+            volumeSlider = (UISlider*)view;
+            break;
+        }
+    }
     
-//     // retrieve system volume
-//     float systemVolume = volumeSlider.value;
+    // retrieve system volume
+    float systemVolume = volumeSlider.value;
     
-//     // change system volume, the value is between 0.0f and 1.0f
-//     [volumeSlider setValue:value animated:NO];
+    // change system volume, the value is between 0.0f and 1.0f
+    [volumeSlider setValue:value animated:NO];
     
-//     // send UI control event to make the change effect right now.
-//     [volumeSlider sendActionsForControlEvents:UIControlEventTouchUpInside];
-// }
+    // send UI control event to make the change effect right now.
+    [volumeSlider sendActionsForControlEvents:UIControlEventTouchUpInside];
+}
 
 /***********************************************************************************************************************/
 //心跳，断线重连

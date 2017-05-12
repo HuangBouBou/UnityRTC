@@ -397,7 +397,12 @@ extern "C" {
         
         //set the callback gameobject in u3d
         [audioRtc setListenerGameObject:@"PlatformSDK"];
-        [audioRtc connectAction:host setPort:port setIceServers:iceServers];
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            NSLog(@"mainThread----%@",[NSThread mainThread]);
+            NSLog(@"currentThread----%@",[NSThread currentThread]);
+            [audioRtc connectAction:host setPort:port setIceServers:iceServers];
+        });
         
         return true;
     }
@@ -441,7 +446,10 @@ extern "C" {
             audioRtc = [[AudioRtcForUnity alloc]init];
         }
         
-        [audioRtc joinRoomAction:room];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc joinRoomAction:room];
+        });
+        
         return true;
     }
     
@@ -452,7 +460,10 @@ extern "C" {
         if (audioRtc == nil)
             audioRtc = [[AudioRtcForUnity alloc]init];
 
-        [audioRtc disConnectAction];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc disConnectAction];
+        });
+        
         return true;
     }
     
@@ -463,7 +474,10 @@ extern "C" {
         if (audioRtc == nil)
             audioRtc = [[AudioRtcForUnity alloc]init];
         
-        [audioRtc disConnectAction];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc disConnectAction];
+        });
+        
         return true;
     }
     
