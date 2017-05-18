@@ -399,8 +399,8 @@ extern "C" {
         [audioRtc setListenerGameObject:@"PlatformSDK"];
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
-            NSLog(@"mainThread----%@",[NSThread mainThread]);
-            NSLog(@"currentThread----%@",[NSThread currentThread]);
+            //NSLog(@"mainThread----%@",[NSThread mainThread]);
+            //NSLog(@"currentThread----%@",[NSThread currentThread]);
             [audioRtc connectAction:host setPort:port setIceServers:iceServers];
         });
         
@@ -425,7 +425,10 @@ extern "C" {
             audioRtc = [[AudioRtcForUnity alloc]init];
         }
         
-        [audioRtc joinRoomAction:room];
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc joinRoomAction:room];
+        });
+		
         return true;
     }
     
@@ -502,7 +505,9 @@ extern "C" {
             audioRtc = [[AudioRtcForUnity alloc]init];
         
         BOOL active = [setting intValue] == 0 ? NO : YES;
-        [audioRtc mutMicrophone:active];
+		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc mutMicrophone:active];
+        });       
         
         return true;
     }
@@ -523,7 +528,9 @@ extern "C" {
             audioRtc = [[AudioRtcForUnity alloc]init];
         BOOL active = [setting intValue] == 0 ? NO : YES;
         
-        [audioRtc mutEarphone:active];
+		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+            [audioRtc mutEarphone:active];
+        });
         
         return true;
     }

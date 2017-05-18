@@ -51,7 +51,7 @@ const NSInteger TIMEOUT_RATE = 5;
 }
 
 - (void)dealHeart : (id)sender {
-    NSLog(@"dealHeart: %@",sender);
+    //NSLog(@"dealHeart: %@",sender);
 
     [self sendHeart];
     [self performSelector:@selector(dealTimeout:) withObject:nil afterDelay:TIMEOUT_RATE];
